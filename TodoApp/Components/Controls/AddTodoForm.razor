@@ -1,0 +1,79 @@
+@using TodoApp.Models
+@using TodoApp.Repositories
+@inject ITodoItemRepository todoRepository
+@inject IUserRepository userRepository
+@inject IJSRuntime JS
+
+<button type="button" @onclick="() => showForm = true" class="btn btn-primary">
+    Dodaj zadanie
+</button>
+
+<div class="mb-3 text-success">
+    <span class="text-success">
+        @postSubmitMessage
+    </span>
+</div>
+
+@if (showForm)
+{
+    <div class="row">
+        <div class="card-body">
+            <EditForm Model="todoItem" FormName="AddTodoForm" OnValidSubmit="() => AddTodo(todoItem)">
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="todoContent" class="form-label">
+                            Dodaj nowe zadanie
+                        </label>
+
+                        <InputText class="form-control" @bind-Value="todoItem.Content" placeholder="Treść Zadania" id="todoContent"></InputText>
+                    </div>
+                    <div class="mb-3">
+                        <label for="todoDate">
+                            Data zadania
+                        </label>
+
+                        <InputDate class="form-control" TValue="DateOnly" @bind-Value="todoItem.Date" id="todoDate"></InputDate>
+                    </div>
+
+
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">Dodaj</button>
+                </div>
+            </EditForm>
+        </div>
+
+    </div>
+}
+
+@code {
+
+    private bool showForm = false;
+    private string? postSubmitMessage;
+
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    [Parameter] public List<TodoItem> TodayTodos { get; set; }
+
+    [Parameter] public EventCallback<List<TodoItem>> TodayTodosChanged { get; set; }
+
+
+    private TodoItem todoItem { get; set; } = new();
+
+
+    private async Task AddTodo(TodoItem todo)
+    {
+        var authState = await authenticationStateTask;
+        var loggedUser = userRepository.FindByEmail(authState.User.Identity.Name);
+        todo.UserId = loggedUser.Id;
+        todo.User = loggedUser;
+        todoRepository.Add(todo);
+        TodayTodos.Add(todo);
+        todoItem = new();
+        await TodayTodosChanged.InvokeAsync(TodayTodos);
+        showForm = false;
+        postSubmitMessage = "Pomyślnie dodano zadanie!";
+    }
+
+}

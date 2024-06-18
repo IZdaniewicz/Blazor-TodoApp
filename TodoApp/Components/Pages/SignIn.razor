@@ -1,0 +1,68 @@
+@page "/sign-in"
+@using System.Security.Claims
+@using TodoApp.Models
+@using TodoApp.Repositories
+@inject IUserRepository userRepository
+@inject NavigationManager navigation
+
+<EditForm Model="@AuthModel" OnValidSubmit="Authenticate" FormName="AuthenticateForm">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3 text-center flex-column">
+        <h3>Zaloguj się</h3>
+    </div>
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="AuthModel.Email" class="form-control" placeholder="Podaj adres e-mail"/>
+        <ValidationMessage For="() => AuthModel.Email"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label>Hasło</label>
+        <InputText type="password" @bind-Value="AuthModel.Password" class="form-control" placeholder="Podaj hasło"/>
+        <ValidationMessage For="() => AuthModel.Password"></ValidationMessage>
+    </div>
+    <div class="mb-3 text-danger">
+        <span class="text-danger">
+            @ErrorMessage
+        </span>
+    </div>
+    <div class="mb-3 d-grid gap-2">
+        <button type="submit" class="btn btn-primary">
+            Zaloguj się
+        </button>
+    </div>
+</EditForm>
+
+<a class="d-inline-block text-center text-primary" href="/register">
+    Nie masz jeszcze konta? Zarejestruj się!
+</a>
+
+@code {
+    [CascadingParameter] public HttpContext HttpContext { get; set; }
+
+    public string? ErrorMessage { get; set; }
+
+
+    [SupplyParameterFromForm] public LoginFormModel AuthModel { get; set; } = new();
+
+    private async Task Authenticate()
+    {
+        var user = userRepository.FindByCredentials(AuthModel.Email, AuthModel.Password);
+        if (user == null)
+        {
+            ErrorMessage = "Podano zły email/hasło!";
+            return;
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, AuthModel.Email),
+        };
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext.SignInAsync(principal);
+
+        navigation.NavigateTo("/");
+    }
+
+}

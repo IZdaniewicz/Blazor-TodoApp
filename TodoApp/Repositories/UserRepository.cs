@@ -34,4 +34,14 @@ public class UserRepository : IUserRepository
         _db.Users.Remove(entity);
         _db.SaveChanges();
     }
+
+    public User? FindByCredentials(string email, string password)
+    {
+        return _db.Users.SingleOrDefault(u => (u.Email == email && u.Password == password));
+    }
+
+    public User? FindByEmail(string email)
+    {
+        return _db.Users.SingleOrDefault(u => u.Email == email);
+    }
 }

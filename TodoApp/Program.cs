@@ -1,18 +1,33 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using TodoApp;
+using TodoApp.Clock;
 using TodoApp.Components;
+using TodoApp.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "auth_token";
+        options.LoginPath = "/sign-in";
+        options.Cookie.MaxAge = TimeSpan.FromHours(24);
+        options.AccessDeniedPath = "/access-denied";
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+
 builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
 
-
+builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddTransient<ITodoItemRepository, TodoItemRepository>();
+builder.Services.AddSingleton<IClockInterface, SystemClock>();
 
 var app = builder.Build();
 
@@ -29,6 +44,8 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

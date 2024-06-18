@@ -34,7 +34,7 @@ namespace TodoApp.Migrations
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("column");
+                        .HasColumnName("content");
 
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date")

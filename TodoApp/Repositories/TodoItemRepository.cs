@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using TodoApp.Models;
 
 namespace TodoApp.Repositories;
@@ -25,7 +24,7 @@ public class TodoItemRepository : ITodoItemRepository
 
     public void Modify(TodoItem entity)
     {
-        _db.TodoItems.Entry(entity).State = EntityState.Modified;
+        _db.TodoItems.Update(entity);
         _db.SaveChanges();
     }
 
@@ -47,9 +46,9 @@ public class TodoItemRepository : ITodoItemRepository
     {
         if (start > end)
             throw new ArgumentException("Start cant be later than end");
-        
+
         var todos = from todo in _db.TodoItems
-            where (todo.UserId == userId && start <= todo.Date && end >= todo.Date)
+            where (todo.UserId == userId && (start <= todo.Date && end >= todo.Date))
             select todo;
         return todos.ToList();
     }

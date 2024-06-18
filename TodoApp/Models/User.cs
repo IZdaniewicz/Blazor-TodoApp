@@ -5,7 +5,9 @@ namespace TodoApp.Models;
 [Table("users")]
 public class User
 {
-    [Column("id")] public int Id { get; set; }
+    [Column("id")] 
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
     [Column("name")] public string Name { get; set; } = null!;
     [Column("email")] public string Email { get; set; } = null!;
     [Column("password")] public string Password { get; set; } = null!;

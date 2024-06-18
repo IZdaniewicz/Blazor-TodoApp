@@ -19,11 +19,6 @@ public class SystemClock : IClockInterface
         return DateOnly.FromDateTime(DateTime.Today);
     }
 
-    public string GetDayOfWeekString(DateOnly date)
-    {
-        int dayNumber = (int)date.DayOfWeek;
-        return _daysOfWeek[dayNumber];
-    }
 
     public IEnumerable<DateOnly> GetWeek(int differenceWithCurrent)
     {
@@ -43,33 +38,41 @@ public class SystemClock : IClockInterface
         return week;
     }
 
-    public IEnumerable<DateOnly> GetMonth(int monthNumber)
+    public DateOnly GetWeekStart()
     {
-        List<DateOnly> month = new List<DateOnly>();
-        if (monthNumber > 12)
-            throw new ArgumentOutOfRangeException();
+        return GetToday().AddDays(
+            -(((int)GetToday().DayOfWeek + 6) % 7)
+        );
+    }
 
-        List<int> shortMonths = new List<int>([2, 4, 6, 9, 11]);
+    public DateOnly GetWeekEnd()
+    {
+        return GetWeekStart().AddDays(6);
+    }
 
+    public DateOnly GetMonthStart()
+    {
+        return new DateOnly(
+            DateTime.Now.Year, DateTime.Now.Month, 01
+        );
+    }
 
-        DateOnly firstDayOfYear = DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, 01, 01));
-        DateOnly firstDayOfMonth = firstDayOfYear;
+    public DateOnly GetMonthEnd()
+    {
+        List<int> shortMonths = [2, 4, 6, 9, 11];
+        int day;
 
-        for (int i = 1; i <= 12; i++)
+        if (shortMonths.Contains(DateTime.Now.Month))
         {
-            if (i == monthNumber)
-                break;
-            int days = (shortMonths.Contains(i)) ? 30 : 31;
-            firstDayOfMonth = firstDayOfMonth.AddDays(days);
+            day = 30;
+        }
+        else
+        {
+            day = 31;
         }
 
-        int daysOfMonth = (shortMonths.Contains(monthNumber)) ? 30 : 31;
-
-        for (int i = 1; i <= daysOfMonth; i++)
-        {
-            month.Add(firstDayOfMonth.AddDays(i));
-        }
-
-        return month;
+        return new DateOnly(
+            DateTime.Now.Year, DateTime.Now.Month, day
+        );
     }
 }

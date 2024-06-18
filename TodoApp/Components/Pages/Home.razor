@@ -1,7 +1,84 @@
 ﻿@page "/"
+@using TodoApp.Clock
+@using TodoApp.Models
+@using TodoApp.Repositories
+@using TodoApp.Components.Controls
+@inject IUserRepository userRepository 
+@inject ITodoItemRepository todoItemRepository
+@inject IClockInterface clock
+@attribute [Authorize]
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>List zadań</PageTitle>
+<h1>Witaj, @User.Name</h1>
+<h3>Oto twoja lista zadań na dziś: </h3>
+<ul class="list-group d-grid">
+    
+    @if (TodayTodos.Count < 1)
+    {
+        <p>Brak Zadań na dziś</p>
+    }
 
-<h1>Hello, world!</h1>
+    @if (TodayTodos.All(item => item.IsDone) && TodayTodos.Count > 0)
+    {
+        <div class="mb-3 text-success">
+            <span class="text-success">
+                Brawo ukończyłeś wszyskie zadania na dziś!
+            </span>
+        </div>
+    }
+    
+    @foreach (var todo in TodayTodos)
+    {
+        <EditForm Model="@todo" FormName="@($"todoForm-{todo.Id}")">
+            <li class="list-group-item d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center">
+                    <InputCheckbox class="form-check-input me-3 ms-3" ValueExpression="() => todo.IsDone" ValueChanged="() => ToggleTodoStatus(todo)"></InputCheckbox>
+                    <div class="flex-grow-1 ms-3 @((todo.IsDone ? "text-danger text-decoration-line-through" : "text-black"))">
+                        @todo.Content
+                    </div>
+                </div>
+                <button type="button" @onclick="() => DeleteTodo(todo)" class="btn btn-primary">Usuń</button>
+            </li>
+        </EditForm>
+    }
+    
+</ul>
 
-Welcome to your new app.
+<AddTodoForm @bind-TodayTodos="TodayTodos"/>
+
+@code
+{
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+
+    public List<TodoItem> TodayTodos { get; set; }
+
+    private User? User { get; set; } = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await authenticationStateTask;
+
+        User = userRepository.FindByEmail(authenticationState.User.Identity.Name);
+        TodayTodos = todoItemRepository.GetAllUserTodosForSpan(
+            User.Id,
+            clock.GetToday(),
+            clock.GetToday()
+        ).ToList();
+    }
+
+    private void ToggleTodoStatus(TodoItem todo)
+    {
+        todo.IsDone = !todo.IsDone;
+        Console.WriteLine(todo.IsDone);
+        todoItemRepository.Modify(todo);
+    }
+
+    private void DeleteTodo(TodoItem todo)
+    {
+        todoItemRepository.Delete(todo);
+        TodayTodos.Remove(todo);
+    }
+}
+

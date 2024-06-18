@@ -4,8 +4,8 @@ public interface IClockInterface
 {
     public DateOnly GetToday();
 
-    public string GetDayOfWeekString(DateOnly date);
-
-    public IEnumerable<DateOnly> GetWeek(int differenceWithCurrent);
-    public IEnumerable<DateOnly> GetMonth(int monthNumber);
+    public DateOnly GetWeekStart();
+    public DateOnly GetWeekEnd();
+    public DateOnly GetMonthStart();
+    public DateOnly GetMonthEnd();
 }

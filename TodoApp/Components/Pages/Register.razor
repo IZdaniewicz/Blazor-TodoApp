@@ -1,0 +1,81 @@
+@page "/register"
+@using TodoApp.Models
+@using TodoApp.Repositories
+@inject NavigationManager navigation
+@inject IUserRepository userRepository
+
+<EditForm Model="@RegisterModel" OnValidSubmit="RegisterUser" FormName="RegisterForm">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3 text-center flex-column">
+        <h3>Zarejestruj się</h3>
+    </div>
+    <div class="mb-3">
+        <label>Nazwa użytkownika</label>
+        <InputText @bind-Value="RegisterModel.Name" class="form-control" placeholder="Podaj nazwę użytkownika"/>
+        <ValidationMessage For="() => RegisterModel.Name"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="RegisterModel.Email" class="form-control" placeholder="Podaj adres e-mail"/>
+        <ValidationMessage For="() => RegisterModel.Email"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label>Hasło</label>
+        <InputText type="password" @bind-Value="RegisterModel.Password" onchange=""class="form-control" placeholder="Podaj hasło"/>
+        <ValidationMessage For="() => RegisterModel.Password"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label>Powtórz hasło</label>
+        <InputText type="password" @bind-Value="RegisterModel.PasswordRepeated" class="form-control" placeholder="Podaj hasło"/>
+    </div>
+    <div class="mb-3 text-danger">
+        <span class="text-danger">
+            @ErrorMessage
+        </span>
+    </div>
+    <div class="mb-3 d-grid gap-2">
+        <button type="submit" class="btn btn-primary">
+            Zarejestruj się
+        </button>
+    </div>
+</EditForm>
+
+<a class="d-inline-block text-center text-primary" href="/sign-in">
+    Masz już konto? Zaloguj się!
+</a>
+
+
+@code {
+
+    private string? ErrorMessage { get; set; }
+
+    [SupplyParameterFromForm] private RegisterFormModel RegisterModel { get; set; } = new();
+
+    private void RegisterUser()
+    {
+        if (RegisterModel.Password != RegisterModel.PasswordRepeated)
+        {
+            ErrorMessage = "Hasła nie są takie same";
+            return;
+        }
+
+        var user = userRepository.FindByCredentials(RegisterModel.Email, RegisterModel.Password);
+        if (user != null)
+        {
+            ErrorMessage = "Istnieje już użytkownik z podanym adresem email!";
+            return;
+        }
+
+        user = new User()
+        {
+            Name = RegisterModel.Name,
+            Email = RegisterModel.Email,
+            Password = RegisterModel.Password
+        };
+
+        userRepository.Add(user);
+
+        navigation.NavigateTo("/sign-in");
+    }
+
+}
